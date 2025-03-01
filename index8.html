@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мини-игра с проводами</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: white;
+        }
+        .game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            flex-direction: column;
+        }
+        .wires {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            position: relative;
+        }
+        .wire {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+        }
+        .wire.red { background-color: red; }
+        .wire.blue { background-color: blue; }
+        .wire.green { background-color: green; }
+        .wire.yellow { background-color: yellow; }
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        line {
+            stroke-width: 5;
+            stroke-linecap: round;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Соедините провода</h1>
+    <div class="game-container">
+        <div class="wires" id="left-wires"></div>
+        <svg id="connections"></svg>
+        <div class="wires" id="right-wires"></div>
+    </div>
+    <button onclick="checkConnections()">Проверить</button>
+    <p id="result"></p>
+
+    <script>
+        let selectedWire = null;
+        let connections = [];
+        const colors = ["red", "blue", "green", "yellow"];
+
+        function randomPosition(existingPositions) {
+            let position;
+            do {
+                position = 50 + Math.random() * 250;
+            } while (existingPositions.some(p => Math.abs(p - position) < 60)); // Проверяем, чтобы круги не перекрывались
+            existingPositions.push(position);
+            return position;
+        }
+
+        function createWires() {
+            const leftContainer = document.getElementById("left-wires");
+            const rightContainer = document.getElementById("right-wires");
+            leftContainer.innerHTML = "";
+            rightContainer.innerHTML = "";
+            
+            let leftPositions = [];
+            let rightPositions = [];
+
+            colors.forEach(color => {
+                const leftWire = document.createElement("div");
+                leftWire.classList.add("wire", color);
+                leftWire.dataset.color = color;
+                leftWire.style.top = randomPosition(leftPositions) + "px";
+                leftWire.style.left = "10px";
+                leftContainer.appendChild(leftWire);
+
+                const rightWire = document.createElement("div");
+                rightWire.classList.add("wire", color);
+                rightWire.dataset.color = color;
+                rightWire.style.top = randomPosition(rightPositions) + "px";
+                rightWire.style.right = "10px";
+                rightContainer.appendChild(rightWire);
+            });
+
+            document.querySelectorAll('.wire').forEach(wire => {
+                wire.addEventListener('click', function() {
+                    if (!selectedWire) {
+                        selectedWire = this;
+                    } else {
+                        if (selectedWire.parentNode !== this.parentNode) {
+                            drawLine(selectedWire, this);
+                            connections.push({from: selectedWire.dataset.color, to: this.dataset.color});
+                            selectedWire = null;
+                        }
+                    }
+                });
+            });
+        }
+
+        function drawLine(start, end) {
+            const svg = document.getElementById('connections');
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            const startRect = start.getBoundingClientRect();
+            const endRect = end.getBoundingClientRect();
+            const svgRect = svg.getBoundingClientRect();
+            
+            line.setAttribute("x1", startRect.left + startRect.width / 2 - svgRect.left);
+            line.setAttribute("y1", startRect.top + startRect.height / 2 - svgRect.top);
+            line.setAttribute("x2", endRect.left + endRect.width / 2 - svgRect.left);
+            line.setAttribute("y2", endRect.top + endRect.height / 2 - svgRect.top);
+            line.setAttribute("stroke", start.dataset.color);
+            
+            svg.appendChild(line);
+        }
+
+        function checkConnections() {
+            const correctConnections = [
+                {from: "red", to: "red"},
+                {from: "blue", to: "blue"},
+                {from: "green", to: "green"},
+                {from: "yellow", to: "yellow"}
+            ];
+            
+            if (JSON.stringify(connections.sort((a, b) => a.from.localeCompare(b.from))) === JSON.stringify(correctConnections.sort((a, b) => a.from.localeCompare(b.from)))) {
+                document.getElementById("result").innerText = "Вы выиграли! Код: 7482";
+            } else {
+                document.getElementById("result").innerText = "Ошибка! Попробуйте снова.";
+                document.getElementById("connections").innerHTML = "";
+                connections = [];
+            }
+        }
+
+        createWires();
+    </script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Змейка-Лабиринт</title>
+    <style>
+        body {
+            color: #fff;
+            background: #222;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+        }
+        canvas {
+            background: #000;
+            display: block;
+            margin: 20px auto;
+        }
+        .btn {
+            background: #8b5a2b;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 5px;
+            margin-top: 20px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #restartButton, #nextButton {
+            top: 60%;
+            display: none;
+        }
+        #startButton {
+            top: 50%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Змейка-Лабиринт</h1>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <button class="btn" id="startButton" onclick="startGame()">Начать</button>
+    <button class="btn" id="restartButton" onclick="restartGame()">Ещё раз</button>
+    <button class="btn" id="nextButton" onclick="nextPuzzle()">Дальше</button>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const box = 20;
+        let snake = [{ x: 0, y: 0 }];
+        let direction = "right";
+        let trail = [];
+        let gameRunning = false;
+        const speed = 150;
+
+        let obstacles = [
+            { x: 100, y: 100 }, { x: 120, y: 100 }, { x: 140, y: 100 },
+            { x: 100, y: 120 }, { x: 100, y: 140 }, { x: 160, y: 160 },
+            { x: 180, y: 160 }, { x: 200, y: 160 }, { x: 220, y: 160 },
+            { x: 50, y: 50 }, { x: 70, y: 50 }, { x: 90, y: 50 },
+            { x: 300, y: 300 }, { x: 320, y: 300 }, { x: 340, y: 300 },
+            { x: 200, y: 200 }, { x: 220, y: 200 }, { x: 240, y: 200 },
+            { x: 200, y: 220 }, { x: 200, y: 240 },
+        ];
+        let goal = { x: 380, y: 380 };
+
+        function drawSnake() {
+            ctx.fillStyle = "lime";
+            snake.forEach(part => ctx.fillRect(part.x, part.y, box, box));
+        }
+
+        function drawTrail() {
+            ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
+            trail.forEach(part => ctx.fillRect(part.x, part.y, box, box));
+        }
+
+        function drawObstacles() {
+            ctx.fillStyle = "red";
+            obstacles.forEach(obstacle => ctx.fillRect(obstacle.x, obstacle.y, box, box));
+        }
+
+        function drawGoal() {
+            ctx.fillStyle = "gold";
+            ctx.fillRect(goal.x, goal.y, box, box);
+        }
+
+        function moveSnake() {
+            if (!gameRunning) return;
+            let head = { ...snake[0] };
+            if (direction === "right") head.x += box;
+            if (direction === "left") head.x -= box;
+            if (direction === "up") head.y -= box;
+            if (direction === "down") head.y += box;
+            
+            if (head.x < 0 || head.y < 0 || head.x >= canvas.width || head.y >= canvas.height || 
+                obstacles.some(obstacle => obstacle.x === head.x && obstacle.y === head.y) ||
+                trail.some(part => part.x === head.x && part.y === head.y)) {
+                stopGame();
+                return;
+            }
+            
+            snake.unshift(head);
+            trail.push({ x: head.x, y: head.y });
+            if (head.x === goal.x && head.y === goal.y) {
+                document.getElementById("nextButton").style.display = "block";
+                gameRunning = false;
+            } else {
+                snake.pop();
+            }
+        }
+
+        function stopGame() {
+            gameRunning = false;
+            document.getElementById("restartButton").style.display = "block";
+        }
+
+        function restartGame() {
+            document.getElementById("restartButton").style.display = "none";
+            document.getElementById("nextButton").style.display = "none";
+            snake = [{ x: 0, y: 0 }];
+            trail = [];
+            direction = "right";
+            gameRunning = true;
+            gameLoop();
+        }
+
+        function startGame() {
+            document.getElementById("startButton").style.display = "none";
+            gameRunning = true;
+            gameLoop();
+        }
+
+        function nextPuzzle() {
+            window.location.href = "index8.html";
+        }
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "ArrowUp" && direction !== "down") direction = "up";
+            if (event.key === "ArrowDown" && direction !== "up") direction = "down";
+            if (event.key === "ArrowLeft" && direction !== "right") direction = "left";
+            if (event.key === "ArrowRight" && direction !== "left") direction = "right";
+        });
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawSnake();
+            drawTrail();
+            drawObstacles();
+            drawGoal();
+            moveSnake();
+            if (gameRunning) setTimeout(gameLoop, speed);
+        }
+    </script>
+</body>
+</html>
